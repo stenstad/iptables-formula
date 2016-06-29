@@ -53,6 +53,39 @@
       {%- endif %}
     {%- endfor %}
 
+    {%- for ip in service_details.get('ip6s_allow',{}) %}
+      {%- if interfaces == '' %}
+        {%- for proto in protos %}
+.iptables_{{sls_params.parent}}_{{service_name}}_allow_{{ip}}_{{proto}}:
+  iptables.append:
+    - table: filter
+    - chain: INPUT
+    - jump: ACCEPT
+    - source: {{ ip }}
+    - dport: {{ service_name }}
+    - proto: {{ proto }}
+    - family: 'ipv6'
+    - save: True
+        {%- endfor %}
+      {%- else %}
+        {%- for interface in interfaces %}
+          {%- for proto in protos %}
+.iptables_{{sls_params.parent}}_{{service_name}}_allow_{{ip}}_{{proto}}_{{interface}}:
+  iptables.append:
+    - table: filter
+    - chain: INPUT
+    - jump: ACCEPT
+    - source: {{ ip }}
+    - dport: {{ service_name }}
+    - proto: {{ proto }}
+    - family: 'ipv6'
+    - i: {{ interface }}
+    - save: True
+          {%- endfor %}
+        {%- endfor %}
+      {%- endif %}
+    {%- endfor %}
+
     {%- if not strict_mode and global_block_nomatch or block_nomatch %}
 # If strict mode is disabled we may want to block anything else
       {%- if interfaces == '' %}
@@ -63,6 +96,17 @@
     - table: filter
     - chain: INPUT
     - jump: REJECT
+    - dport: {{ service_name }}
+    - proto: {{ proto }}
+    - save: True
+
+.iptables_{{sls_params.parent}}_{{service_name}}_deny_other_{{proto}}_v6:
+  iptables.append:
+    - position: last
+    - table: filter
+    - chain: INPUT
+    - jump: REJECT
+    - family: 'ipv6'
     - dport: {{ service_name }}
     - proto: {{ proto }}
     - save: True
@@ -79,6 +123,18 @@
     - i: {{ interface }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    - save: True
+
+.iptables_{{sls_params.parent}}_{{service_name}}_deny_other_{{proto}}_v6_{{interface}}:
+  iptables.append:
+    - position: last
+    - table: filter
+    - chain: INPUT
+    - jump: REJECT
+    - i: {{ interface }}
+    - dport: {{ service_name }}
+    - proto: {{ proto }}
+    - family: 'ipv6'
     - save: True
           {%- endfor %}
         {%- endfor %}

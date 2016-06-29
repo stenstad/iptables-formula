@@ -4,6 +4,7 @@
   {% set install = firewall.get('install', False) %}
   {% set strict_mode = firewall.get('strict', False) %}
   {% set global_block_nomatch = firewall.get('block_nomatch', False) %}
+  {% set icmp = firewall.get('icmp', False) %}
   {% set packages = salt['grains.filter_by']({
     'Debian': ['iptables', 'iptables-persistent'],
     'RedHat': ['iptables'],
@@ -30,6 +31,16 @@
           - source: 127.0.0.1
           - save: True
 
+      iptables_allow_localhost_v6:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - source: '::1/128'
+          - destination: '::1/128'
+          - save: True
+
       # Allow related/established sessions
       iptables_allow_established:
         iptables.append:
@@ -40,6 +51,16 @@
           - ctstate: 'RELATED,ESTABLISHED'
           - save: True            
 
+      iptables_allow_established_v6:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - match: conntrack
+          - ctstate: 'RELATED,ESTABLISHED'
+          - save: True
+
       # Set the policy to deny everything unless defined
       enable_reject_policy:
         iptables.set_policy:
@@ -49,7 +70,153 @@
           - require:
             - iptables: iptables_allow_localhost
             - iptables: iptables_allow_established
+
+      enable_reject_policy_v6:
+        iptables.set_policy:
+          - table: filter
+          - chain: INPUT
+          - policy: DROP
+          - family: ipv6
+          - require:
+            - iptables: iptables_allow_localhost_v6
+            - iptables: iptables_allow_established_v6
+
+      # We need to allow IPv6 locally
+      enable_icmpv6_router_advertisement:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: router-advertisement
+          - match: hl
+          - hl-eq: 255
+          - save: True
+
+      enable_icmpv6_neighbor_solicitation:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: neighbor-solicitation
+          - match: hl
+          - hl-eq: 255
+          - save: True
+
+      enable_icmpv6_neighbor_advertisement:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: neighbor-advertisement
+          - match: hl
+          - hl-eq: 255
+          - save: True
+
+      enable_icmpv6_redirect:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: redirect
+          - match: hl
+          - hl-eq: 255
+          - save: True
+
     {%- endif %}
+
+    {%- if icmp %}
+    # Allow ICMP inbound
+
+      enable_icmp_echo_request:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - proto: icmp
+          - icmp-type: echo-request
+          - save: True
+
+      enable_icmp_echo_reply:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - proto: icmp
+          - icmp-type: echo-request
+          - save: True
+    
+      enable_icmpv6_destination_unreachable:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: destination-unreachable
+          - save: True
+
+      enable_icmpv6_packet_too_big:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: packet-too-big
+          - save: True
+
+      enable_icmpv6_time_exceeded:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: time-exceeded
+          - save: True
+
+      enable_icmpv6_parameter_problem:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: parameter-problem
+          - save: True
+
+      enable_icmpv6_echo_request:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - match: limit
+          - limit: 900/min
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: echo-request
+          - save: True
+
+      enable_icmpv6_echo_reply:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - match: limit
+          - limit: 900/min
+          - family: ipv6
+          - proto: icmpv6
+          - icmpv6-type: echo-reply
+          - save: True
+    {% endif %}
 
   # Generate ipsets for all services that we have information about
   {%- for service_name, service_details in firewall.get('services', {}).items() %}  
@@ -89,6 +256,39 @@
       {%- endif %}
     {%- endfor %}
 
+    {%- for ip in service_details.get('ip6s_allow', []) %}
+      {%- if interfaces == '' %}
+        {%- for proto in protos %}
+      iptables_{{service_name}}_allow_{{ip}}_{{proto}}:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - source: {{ ip }}
+          - dport: {{ service_name }}
+          - proto: {{ proto }}
+          - family: 'ipv6'
+          - save: True
+        {%- endfor %}
+      {%- else %}
+        {%- for interface in interfaces %}
+          {%- for proto in protos %}
+      iptables_{{service_name}}_allow_{{ip}}_{{proto}}_{{interface}}:
+        iptables.append:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - i: {{ interface }}
+          - source: {{ ip }}
+          - dport: {{ service_name }}
+          - proto: {{ proto }}
+          - family: 'ipv6'
+          - save: True
+          {%- endfor %}
+        {%- endfor %}
+      {%- endif %}
+    {%- endfor %}
+
     {%- if not strict_mode and global_block_nomatch or block_nomatch %}
       # If strict mode is disabled we may want to block anything else
       {%- if interfaces == '' %}
@@ -101,6 +301,17 @@
           - jump: REJECT
           - dport: {{ service_name }}
           - proto: {{ proto }}
+          - save: True
+
+      iptables_{{service_name}}_deny_other_{{proto}}_v6:
+        iptables.append:
+          - position: last
+          - table: filter
+          - chain: INPUT
+          - jump: REJECT
+          - dport: {{ service_name }}
+          - proto: {{ proto }}
+          - family: 'ipv6'
           - save: True
         {%- endfor %}
       {%- else %}
@@ -115,6 +326,18 @@
           - i: {{ interface }}
           - dport: {{ service_name }}
           - proto: {{ proto }}
+          - save: True
+
+      iptables_{{service_name}}_deny_other_{{proto}}_v6_{{interface}}:
+        iptables.append:
+          - position: last
+          - table: filter
+          - chain: INPUT
+          - jump: REJECT
+          - i: {{ interface }}
+          - dport: {{ service_name }}
+          - proto: {{ proto }}
+          - family: 'ipv6'
           - save: True
           {%- endfor %}
         {%- endfor %}
