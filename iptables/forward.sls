@@ -64,6 +64,7 @@
 
   # Rules for forward whitelist IP classes
   # put whitelist rules below strict rules and above service rules
+  # IPv6 is broken here
   {%- set whitelist = forward.get( 'whitelist', {}) %}
   {%- for network in whitelist.get('networks', {}) %}
       iptables_forward_whitelist_allow_{{ network }}:
@@ -71,25 +72,24 @@
            - table: filter
            - chain: FORWARD
            - jump: ACCEPT
-           - source: {{ ip }}
+           - source: {{ network }}
            - save: True
            {{ white_position }}
-{%- endfor %}
-{%- for interface in whitelist.get('interfaces', {}) %}
-      iptables_forward_whitelist_allow_{{ip}}:
+  {%- endfor %}
+  {%- for interface in whitelist.get('interfaces', {}) %}
+      iptables_forward_whitelist_allow_{{ interface }}:
         iptables.insert:
            - table: filter
            - chain: FORWARD
            - jump: ACCEPT
-           - source: {{ ip }}
-           - family: 'ipv6'
+           - i: {{ interface }}
            - save: True
            {{ white_position }}
-    {%- endfor %}
+  {%- endfor %}
 
   # Remove whitelist IPs in ips_remove
-    {%- for ip in service_details.get('ips_remove',{} ) %}
-      iptables_forward_whitelist_allow_{{ip}}:
+    {%- for network in whitelist.get('ips_remove', {}) %}
+      iptables_forward_whitelist_allow_{{ network }}:
         iptables.delete:
            - table: filter
            - chain: FORWARD
@@ -107,7 +107,6 @@
            - family: 'ipv6'
            - save: True
     {%- endfor %}
-  {%- endfor %}
 
   # Rules for forward whitelist interfaces
   # put whitelist rules below strict rules and above service rules
