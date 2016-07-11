@@ -30,7 +30,7 @@
           - jump: ACCEPT
           - match: conntrack
           - ctstate: 'RELATED,ESTABLISHED'
-          - save: True       
+          - save: True
           {{ strict_position }}
 
       iptables_forward_allow_established_v6:
@@ -62,20 +62,33 @@
           - require:
             - iptables: iptables_forward_allow_established_v6
 
-  # Rules for forward whitelist IP classes
-  # put whitelist rules below strict rules and above service rules
-  # IPv6 is broken here
+  # Whitelisting
+
+  # Insert whitelist IPs and interfaces.
   {%- set whitelist = forward.get( 'whitelist', {}) %}
-  {%- for network in whitelist.get('networks', {}) %}
-      iptables_forward_whitelist_allow_{{ network }}:
+  {%- for ip in whitelist.get('ips_allow', {}) %}
+      iptables_forward_whitelist_allow_{{ ip }}:
         iptables.insert:
            - table: filter
            - chain: FORWARD
            - jump: ACCEPT
-           - source: {{ network }}
+           - source: {{ ip }}
            - save: True
            {{ white_position }}
   {%- endfor %}
+
+  {%- for ip in whitelist.get('ip6s_allow', {}) %}
+      iptables_forward_whitelist_allow_{{ ip }}:
+        iptables.insert:
+          - table: filter
+          - chain: FORWARD
+          - jump: ACCEPT
+          - source: {{ ip }}
+          - family: 'ipv6'
+          - save: True
+          {{ white_position }}
+  {%- endfor %}
+
   {%- for interface in whitelist.get('interfaces', {}) %}
       iptables_forward_whitelist_allow_{{ interface }}:
         iptables.insert:
@@ -87,76 +100,39 @@
            {{ white_position }}
   {%- endfor %}
 
-  # Remove whitelist IPs in ips_remove
-    {%- for network in whitelist.get('ips_remove', {}) %}
-      iptables_forward_whitelist_allow_{{ network }}:
+  # Remove whitelist IPs and interfaces.
+  {%- for ip in whitelist.get('ips_remove', {}) %}
+      iptables_forward_whitelist_allow_{{ ip }}:
         iptables.delete:
            - table: filter
            - chain: FORWARD
            - jump: ACCEPT
            - source: {{ ip }}
            - save: True
-    {%- endfor %}
-    {%- for ip in service_details.get('ip6s_remove',{} ) %}
-      iptables_forward_whitelist_allow_{{ip}}:
-        iptables.delete:
-           - table: filter
-           - chain: FORWARD
-           - jump: ACCEPT
-           - source: {{ ip }}
-           - family: 'ipv6'
-           - save: True
-    {%- endfor %}
-
-  # Rules for forward whitelist interfaces
-  # put whitelist rules below strict rules and above service rules
-  {%- for interface_name, interface_details in forward.get('whitelist', {}).items() %}
-    {%- for ip in service_details.get('ips_allow',{}) %}
-      iptables_forward_whitelist_allow_{{ip}}:
-        iptables.insert:
-           - table: filter
-           - chain: FORWARD
-           - jump: ACCEPT
-           - i: {{ ip }}
-           - save: True
-           {{ white_position }}
-    {%- endfor %}
-    {%- for ip in service_details.get('ip6s_allow',{}) %}
-      iptables_forward_whitelist_allow_{{ip}}:
-        iptables.insert:
-           - table: filter
-           - chain: FORWARD
-           - jump: ACCEPT
-           - source: {{ ip }}
-           - family: 'ipv6'
-           - save: True
-           {{ white_position }}
-    {%- endfor %}
-
-  # Remove whitelist IPs in ips_remove
-    {%- for ip in service_details.get('ips_remove',{} ) %}
-      iptables_forward_whitelist_allow_{{ip}}:
-        iptables.delete:
-           - table: filter
-           - chain: FORWARD
-           - jump: ACCEPT
-           - source: {{ ip }}
-           - save: True
-    {%- endfor %}
-    {%- for ip in service_details.get('ip6s_remove',{} ) %}
-      iptables_forward_whitelist_allow_{{ip}}:
-        iptables.delete:
-           - table: filter
-           - chain: FORWARD
-           - jump: ACCEPT
-           - source: {{ ip }}
-           - family: 'ipv6'
-           - save: True
-    {%- endfor %}
   {%- endfor %}
 
+  {%- for network in whitelist.get('ip6s_remove',{} ) %}
+      iptables_forward_whitelist_allow_{{ ip }}:
+        iptables.delete:
+           - table: filter
+           - chain: FORWARD
+           - jump: ACCEPT
+           - source: {{ ip }}
+           - family: 'ipv6'
+           - save: True
+  {%- endfor %}
 
-    {%- if icmp %}
+  {%- for interface in whitelist.get('interfaces_remove', {}) %}
+      iptables_forward_whitelist_allow_{{ interface }}:
+        iptables.delete:
+           - table: filter
+           - chain: FORWARD
+           - jump: ACCEPT
+           - i: {{ interface }}
+           - save: True
+  {%- endfor %}
+
+  {%- if icmp %}
     # Allow ICMP forwarding
 
       iptables_forward_enable_icmp_echo_request:
@@ -176,7 +152,7 @@
           - proto: icmp
           - icmp-type: echo-request
           - save: True
-    
+
       iptables_forward_enable_icmpv6_destination_unreachable:
         iptables.append:
           - table: filter
@@ -240,7 +216,7 @@
           - proto: icmpv6
           - icmpv6-type: echo-reply
           - save: True
-    {% endif %}
+  {% endif %}
 
   # Rules for services
   {%- for service_name, service_details in forward.get('services', {}).items() %}
