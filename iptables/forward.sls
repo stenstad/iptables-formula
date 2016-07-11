@@ -248,7 +248,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_forward_{{service_name}}_{{proto}}_allow_{{ip}}:
+      iptables_forward_{{service_name}}_{{proto}}_allow_{{ip}}_{{interface}}:
         iptables.{{ action }}:
           - table: filter
           - chain: FORWARD
@@ -313,7 +313,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_forward_{{service_name}}_{{proto}}_allow_{{ip}}:
+      iptables_forward_{{service_name}}_{{proto}}_allow_{{ip}}_{{interface}}:
         iptables.delete:
           - table: filter
           - chain: FORWARD
@@ -346,7 +346,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_forward_{{service_name}}_{{proto}}_allow_{{ip}}:
+      iptables_forward_{{service_name}}_{{proto}}_allow_{{ip}}_{{interface}}:
         iptables.delete:
           - table: filter
           - chain: FORWARD

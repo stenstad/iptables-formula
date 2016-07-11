@@ -322,7 +322,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}_{{ interface }}:
         iptables.{{ action }}:
           - table: filter
           - chain: INPUT
@@ -387,7 +387,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}_{{interface}}:
         iptables.delete:
           - table: filter
           - chain: INPUT
@@ -420,7 +420,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}_{{interface}}:
         iptables.delete:
           - table: filter
           - chain: INPUT
