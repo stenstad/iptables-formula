@@ -446,26 +446,24 @@
 
     # no_match blocking rule
     {%- for proto in protos %}
+      iptables_input_{{service_name}}_deny_other:
+        iptables.{{ action }}:
+          - table: filter
+          - chain: INPUT
+          - jump: REJECT
+          - dport: {{ service_name }}
+          - proto: {{ proto }}
+          - save: True
 
-    iptables_forward_{{service_name}}_deny_other:
-      iptables.{{ action }}:
-        - table: filter
-        - chain: INPUT
-        - jump: REJECT
-        - dport: {{ service_name }}
-        - proto: {{ proto }}
-        - save: True
-
-    iptables_forward_{{service_name}}_deny_other_v6:
-      iptables.{{ action }}:
-        - table: filter
-        - chain: INPUT
-        - jump: REJECT
-        - dport: {{ service_name }}
-        - proto: {{ proto }}
-        - family: 'ipv6'
-        - save: True
-
+      iptables_input_{{service_name}}_deny_other_v6:
+        iptables.{{ action }}:
+          - table: filter
+          - chain: INPUT
+          - jump: REJECT
+          - dport: {{ service_name }}
+          - proto: {{ proto }}
+          - family: 'ipv6'
+          - save: True
     {%- endfor %}
 
   {%- endfor %}
