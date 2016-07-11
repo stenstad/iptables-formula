@@ -316,7 +316,7 @@
           - jump: ACCEPT
           - source: {{ ip }}
           - dport: {{ service_name }}
-          - proto: tcp
+          - proto: {{ proto }}
           - save: True
         {%- endfor %}
       {%- else %}
