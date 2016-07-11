@@ -5,7 +5,7 @@
   {% set global_block_nomatch = forward.get('block_nomatch', False ) %}
 
   # Forward Strict Mode
-  # when Enabled, add rules for established connections 
+  # when Enabled, add rules for established connections
   #   at the top and set policy to reject
   # when Disabled, remove rules for localhost/established connections
   #   and set policy to allow
