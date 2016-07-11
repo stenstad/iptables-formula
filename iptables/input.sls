@@ -309,7 +309,7 @@
     {%- for ip in service_details.get('ips_allow',{}) %}
       {%- if interfaces == '' %}
         {%- for proto in protos %}
-      iptables_input_{{service_name}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
         iptables.{{ action }}:
           - table: filter
           - chain: INPUT
@@ -322,7 +322,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_input_{{service_name}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
         iptables.{{ action }}:
           - table: filter
           - chain: INPUT
@@ -340,7 +340,7 @@
     {%- for ip in service_details.get('ip6s_allow', []) %}
       {%- if interfaces == '' %}
         {%- for proto in protos %}
-      iptables_input_{{service_name}}_allow_{{ip}}_{{proto}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
         iptables.append:
           - table: filter
           - chain: INPUT
@@ -354,7 +354,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_input_{{service_name}}_allow_{{ip}}_{{proto}}_{{interface}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}_{{interface}}:
         iptables.append:
           - table: filter
           - chain: INPUT
@@ -374,7 +374,7 @@
     {%- for ip in service_details.get('ips_remove',{}) %}
       {%- if interfaces == '' %}
         {%- for proto in protos %}
-      iptables_input_{{service_name}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
         iptables.delete:
           - table: filter
           - chain: INPUT
@@ -387,7 +387,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_input_{{service_name}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
         iptables.delete:
           - table: filter
           - chain: INPUT
@@ -406,7 +406,7 @@
     {%- for ip in service_details.get('ip6s_remove',{}) %}
       {%- if interfaces == '' %}
         {%- for proto in protos %}
-      iptables_input_{{service_name}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
         iptables.delete:
           - table: filter
           - chain: INPUT
@@ -420,7 +420,7 @@
       {%- else %}
         {%- for interface in interfaces %}
           {%- for proto in protos %}
-      iptables_input_{{service_name}}_allow_{{ip}}:
+      iptables_input_{{service_name}}_{{proto}}_allow_{{ip}}:
         iptables.delete:
           - table: filter
           - chain: INPUT
@@ -446,7 +446,7 @@
 
     # no_match blocking rule
     {%- for proto in protos %}
-      iptables_input_{{service_name}}_deny_other:
+      iptables_input_{{service_name}}_{{proto}}_deny_other:
         iptables.{{ action }}:
           - table: filter
           - chain: INPUT
@@ -455,7 +455,7 @@
           - proto: {{ proto }}
           - save: True
 
-      iptables_input_{{service_name}}_deny_other_v6:
+      iptables_input_{{service_name}}_{{proto}}_deny_other_v6:
         iptables.{{ action }}:
           - table: filter
           - chain: INPUT
