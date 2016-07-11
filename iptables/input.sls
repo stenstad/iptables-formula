@@ -7,7 +7,7 @@
   {% set global_block_nomatch = input.get('block_nomatch', False) %}
 
   # Input Strict Mode
-  # when Enabled, add rules for localhost/established connections 
+  # when Enabled, add rules for localhost/established connections
   #   at the top and set policy to reject
   # when Disabled, remove rules for localhost/established connections
   #   and set policy to allow
@@ -32,7 +32,7 @@
           - jump: ACCEPT
           - match: conntrack
           - ctstate: 'RELATED,ESTABLISHED'
-          - save: True            
+          - save: True
           {{ strict_position }}
 
       iptables_input_allow_established_v6:
@@ -136,55 +136,78 @@
           - hl-eq: 255
           - save: True
 
-  # Rules for inbound whitelist IP classes
-  # put whitelist rules below strict rules and above service rules
-  {%- for service_name, service_details in input.get('whitelist', {}).items() %}
-    {%- for ip in service_details.get('ips_allow',{}) %}
-      iptables_input_whitelist_allow_{{ip}}:
-        iptables.insert:
-           - table: filter
-           - chain: INPUT
-           - jump: ACCEPT
-           - source: {{ ip }}
-           - save: True
-           {{ white_position }}
-    {%- endfor %}
-    {%- for ip in service_details.get('ip6s_allow',{}) %}
-      iptables_input_whitelist_allow_{{ip}}:
-        iptables.insert:
-           - table: filter
-           - chain: INPUT
-           - jump: ACCEPT
-           - source: {{ ip }}
-           - family: 'ipv6'
-           - save: True
-           {{ white_position }}
-    {%- endfor %}
+  # Whitelisting
 
-  # Remove whitelist IPs in ips_remove
-    {%- for ip in service_details.get('ips_remove',{} ) %}
-      iptables_input_whitelist_allow_{{ip}}:
-        iptables.delete:
+  # Insert whitelist IPs and interfaces.
+  {%- set whitelist = input.get( 'whitelist', {}) %}
+  {%- for ip in whitelist.get('ips_allow', {}) %}
+      iptables_input_whitelist_allow_{{ ip }}:
+        iptables.insert:
            - table: filter
            - chain: INPUT
            - jump: ACCEPT
            - source: {{ ip }}
            - save: True
-    {%- endfor %}
-    {%- for ip in service_details.get('ip6s_remove',{} ) %}
-      iptables_input_whitelist_allow_{{ip}}:
-        iptables.delete:
-           - table: filter
-           - chain: INPUT
-           - jump: ACCEPT
-           - source: {{ ip }}
-           - family: 'ipv6'
-           - save: True
-    {%- endfor %}
+           {{ white_position }}
   {%- endfor %}
 
-    {%- if icmp %}
-    # Allow ICMP inbound
+  {%- for ip in whitelist.get('ip6s_allow', {}) %}
+      iptables_input_whitelist_allow_{{ ip }}:
+        iptables.insert:
+          - table: filter
+          - chain: INPUT
+          - jump: ACCEPT
+          - source: {{ ip }}
+          - family: 'ipv6'
+          - save: True
+          {{ white_position }}
+  {%- endfor %}
+
+  {%- for interface in whitelist.get('interfaces', {}) %}
+      iptables_input_whitelist_allow_{{ interface }}:
+        iptables.insert:
+           - table: filter
+           - chain: INPUT
+           - jump: ACCEPT
+           - i: {{ interface }}
+           - save: True
+           {{ white_position }}
+  {%- endfor %}
+
+  # Remove whitelist IPs and interfaces.
+  {%- for ip in whitelist.get('ips_remove', {}) %}
+      iptables_input_whitelist_allow_{{ ip }}:
+        iptables.delete:
+           - table: filter
+           - chain: INPUT
+           - jump: ACCEPT
+           - source: {{ ip }}
+           - save: True
+  {%- endfor %}
+
+  {%- for network in whitelist.get('ip6s_remove',{} ) %}
+      iptables_input_whitelist_allow_{{ ip }}:
+        iptables.delete:
+           - table: filter
+           - chain: INPUT
+           - jump: ACCEPT
+           - source: {{ ip }}
+           - family: 'ipv6'
+           - save: True
+  {%- endfor %}
+
+  {%- for interface in whitelist.get('interfaces_remove', {}) %}
+      iptables_input_whitelist_allow_{{ interface }}:
+        iptables.delete:
+           - table: filter
+           - chain: INPUT
+           - jump: ACCEPT
+           - i: {{ interface }}
+           - save: True
+  {%- endfor %}
+
+  {%- if icmp %}
+  # Allow ICMP inbound
 
       iptables_input_enable_icmp_echo_request:
         iptables.append:
@@ -203,7 +226,7 @@
           - proto: icmp
           - icmp-type: echo-request
           - save: True
-    
+
       iptables_input_enable_icmpv6_destination_unreachable:
         iptables.append:
           - table: filter
