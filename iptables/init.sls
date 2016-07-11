@@ -15,4 +15,4 @@
     # Here for debugging
       print_iptables:
         cmd.run:
-          - name: "iptables -L"
+          - name: "iptables -L -n -v"
