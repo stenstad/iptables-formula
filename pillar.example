@@ -3,6 +3,7 @@ firewall:
   enabled: True
   strict: True
   flush: False
+  debug: True
   services:
     ssh:
       block_nomatch: False
