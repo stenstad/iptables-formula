@@ -30,6 +30,7 @@ firewall:
     block_nomatch: False
     services:
       ssh:
+        comment: "Allow inbound SSH access"
         ips_allow:
           - 192.168.0.0/24
           - 10.0.2.2/32      
@@ -58,6 +59,7 @@ firewall:
   output:
     services:
       ssh:
+        comment: "Allow outbound SSH access"
         block_nomatch: True
         ips_allow:
           - 192.168.1.0/24
@@ -120,6 +122,7 @@ Notes:
  * Strict mode means: Deny **everything** except explicitly allowed (use with care!)
  * block_nomatch: With non-strict mode adds in a "REJECT" rule below the accept rules, otherwise other traffic to that service is still allowed. Can be defined per-service or globally, defaults to False.
  * Servicenames can be either port numbers or servicenames (e.g. ssh, zabbix-agent, http) and are available for viewing/configuring in `/etc/services`
+ * Comment section is optional.
 
 Legacy: Format still supported
 ===============================
@@ -133,6 +136,7 @@ firewall:
   strict: True
     services:
       ssh:
+        comment: "Allow SSH access"
         block_nomatch: False
         ips_allow:
           - 192.168.0.0/24
