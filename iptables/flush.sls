@@ -27,7 +27,7 @@
         iptables.flush:
           - table: filter
           - require:
-            - iptables: iptables_input_flush_policy_accept
-            - iptables: iptables_output_flush_policy_accept
-            - iptables: iptables_forward_flush_policy_accept
+            - iptables: iptables_input_policy_accept
+            - iptables: iptables_output_policy_accept
+            - iptables: iptables_forward_policy_accept
   {%- endif %}
