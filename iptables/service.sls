@@ -18,8 +18,9 @@
   # Generate ipsets for all services that we have information about
   {%- for service_name, service_details in pfirewall.get('services', {}).items() %}  
     {% set block_nomatch = service_details.get('block_nomatch', False) %}
-    {% set interfaces = service_details.get('interfaces','') %}
-    {% set protos = service_details.get('protos',['tcp']) %}
+    {% set interfaces = service_details.get('interfaces', '') %}
+    {% set protos = service_details.get('protos', ['tcp']) %}
+    {% set comment = service_details.get('comment', '') %}
 
     # Allow rules for ips/subnets
     {%- for ip in service_details.get('ips_allow',{}) %}
@@ -33,6 +34,7 @@
     - source: {{ ip }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    - comment: {{ comment }}
     - save: True
         {%- endfor %}
       {%- else %}
@@ -46,6 +48,7 @@
     - source: {{ ip }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    - comment: {{ comment }}
     - i: {{ interface }}
     - save: True
           {%- endfor %}
@@ -64,6 +67,7 @@
     - source: {{ ip }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    - comment: {{ comment }}
     - family: 'ipv6'
     - save: True
         {%- endfor %}
@@ -78,6 +82,7 @@
     - source: {{ ip }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    - comment: {{ comment }}
     - family: 'ipv6'
     - i: {{ interface }}
     - save: True

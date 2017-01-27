@@ -3,8 +3,11 @@ firewall:
   enabled: True
   strict: True
   flush: False
+  debug: True
+
   services:
     ssh:
+      comment: "Allow SSH access"
       block_nomatch: False
       ips_allow:
         - 192.168.0.0/24
@@ -28,6 +31,7 @@ firewall:
 
     services:
       ssh:
+        comment: "Allow inbound SSH access"
         ips_allow:
           - 192.168.0.0/16
           - 10.0.2.12/32
@@ -53,6 +57,7 @@ firewall:
     strict: False
     services:
       ssh:
+        comment: "Allow outbound SSH access"
         block_nomatch: True
         ips_allow:
           - 192.168.0.0/16
