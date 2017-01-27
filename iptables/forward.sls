@@ -223,7 +223,7 @@
     {% set block_nomatch = service_details.get('block_nomatch', False) %}
     {% set interfaces = service_details.get('interfaces', '') %}
     {% set protos = service_details.get('protos', ['tcp']) %}
-    {% set comment = service_details.get('comment', '') %}
+    {% set comment = service_details.get('comment', False) %}
 
     # Check if rule is marked for removal
     {%- if service_details.get('remove') %}
@@ -244,7 +244,9 @@
           - destination: {{ ip }}
           - dport: {{ service_name }}
           - proto: {{ proto }}
+          {% if comment %}
           - comment: {{ comment }}
+          {% endif %}
           - save: True
         {%- endfor %}
       {%- else %}
@@ -259,7 +261,9 @@
           - destination: {{ ip }}
           - dport: {{ service_name }}
           - proto: {{ proto }}
+          {% if comment %}
           - comment: {{ comment }}
+          {% endif %}
           - save: True
         {%- endfor %}
         {%- endfor %}
@@ -277,7 +281,9 @@
           - source: {{ ip }}
           - dport: {{ service_name }}
           - proto: {{ proto }}
+          {% if comment %}
           - comment: {{ comment }}
+          {% endif %}
           - family: 'ipv6'
           - save: True
         {%- endfor %}
@@ -293,7 +299,9 @@
           - source: {{ ip }}
           - dport: {{ service_name }}
           - proto: {{ proto }}
+          {% if comment %}
           - comment: {{ comment }}
+          {% endif %}
           - family: 'ipv6'
           - save: True
           {%- endfor %}

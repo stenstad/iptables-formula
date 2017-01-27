@@ -20,7 +20,7 @@
     {% set block_nomatch = service_details.get('block_nomatch', False) %}
     {% set interfaces = service_details.get('interfaces', '') %}
     {% set protos = service_details.get('protos', ['tcp']) %}
-    {% set comment = service_details.get('comment', '') %}
+    {% set comment = service_details.get('comment', False) %}
 
     # Allow rules for ips/subnets
     {%- for ip in service_details.get('ips_allow',{}) %}
@@ -34,7 +34,9 @@
     - source: {{ ip }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    {% if comment %}
     - comment: {{ comment }}
+    {% endif %}
     - save: True
         {%- endfor %}
       {%- else %}
@@ -48,7 +50,9 @@
     - source: {{ ip }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    {% if comment %}
     - comment: {{ comment }}
+    {% endif %}
     - i: {{ interface }}
     - save: True
           {%- endfor %}
@@ -67,7 +71,9 @@
     - source: {{ ip }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    {% if comment %}
     - comment: {{ comment }}
+    {% endif %}
     - family: 'ipv6'
     - save: True
         {%- endfor %}
@@ -82,7 +88,9 @@
     - source: {{ ip }}
     - dport: {{ service_name }}
     - proto: {{ proto }}
+    {% if comment %}
     - comment: {{ comment }}
+    {% endif %}
     - family: 'ipv6'
     - i: {{ interface }}
     - save: True

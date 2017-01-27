@@ -83,7 +83,7 @@
   # Rules for services
   {%- for service_name, service_details in output.get('services', {}).items() %}
     {% set block_nomatch = service_details.get('block_nomatch', False) %}
-    {% set comment = service_details.get('comment', '') %}
+    {% set comment = service_details.get('comment', False) %}
 
     # Check if rule is marked for removal
     {%- if service_details.get('remove') %}
@@ -102,7 +102,9 @@
           - destination: {{ ip }}
           - dport: {{ service_name }}
           - proto: tcp
+          {% if comment %}
           - comment: {{ comment }}
+          {% endif %}
           - save: True
     {%- endfor %}
 
