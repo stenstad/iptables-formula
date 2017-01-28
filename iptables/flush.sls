@@ -45,6 +45,7 @@
             - iptables_flush
             - iptables.flush
           # This is a workaround to mimic "now + x seconds", since Salt schedule just supports ISO8601 time format.
+          # It generates "now" based on Unix Time, then it add x number of seconds, finally it converts that to ISO8601 time.
           - once: "{{ (None|strftime("%s")|int + testing_mode_timer)|strftime("%Y-%m-%dT%H:%M:%S") }}"
           - once_fmt: "%Y-%m-%dT%H:%M:%S"
           - persist: False
