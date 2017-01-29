@@ -5,6 +5,11 @@ firewall:
   flush: False
   debug: True
 
+  # Flush rules after x seconds.
+  testing_mode:
+      enabled: True
+      flush_after: 30
+
   services:
     ssh:
       comment: "Allow SSH access"
