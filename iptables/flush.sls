@@ -4,8 +4,9 @@
   {% set flush = firewall.get('flush', False) %}
 
   # If testing_mode.enabled = true, it will flush iptables after x seconds.
-  {% set testing_mode_enabled = firewall.get('testing_mode:enabled', True) %}
-  {% set testing_mode_timer = firewall.get('testing_mode:flush_after', 60)|int %}
+  {% set testing_mode = firewall.get('testing_mode', {}) %}
+  {% set testing_mode_enabled = testing_mode.get('enabled', True) %}
+  {% set testing_mode_timer = testing_mode.get('flush_after', 60)|int %}
 
   {%- if flush or testing_mode_enabled %}
   # IPv6 is missing!
